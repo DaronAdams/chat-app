@@ -4,8 +4,8 @@ import java.io.*;
 import java.net.Socket;
 
 public class ChatThread extends Thread {
-    private Socket socket;
-    private Server server;
+    private final Socket socket;
+    private final Server server;
     private PrintWriter printWriter;
 
     public ChatThread(Socket socket, Server server) {
@@ -15,10 +15,10 @@ public class ChatThread extends Thread {
 
     public void start() {
         try {
-            InputStream inputStream = socket.getInputStream();
+            final InputStream inputStream = socket.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
-            OutputStream outputStream = socket.getOutputStream();
+            final OutputStream outputStream = socket.getOutputStream();
             printWriter = new PrintWriter(outputStream, true);
 
             String userName = reader.readLine();
@@ -45,5 +45,23 @@ public class ChatThread extends Thread {
             System.out.println("Error has occurred: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    /*
+    * A list of all connected users
+    */
+    void printUserList() {
+        if (server.usersAreConnected()) {
+            printWriter.println("Connected users: " + server.getUsers());
+        } else {
+            printWriter.println("No other users are connected");
+        }
+    }
+
+    /*
+    * Sends the message to the client
+     */
+    void sendMessage(String message) {
+        printWriter.println(message);
     }
 }
