@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class Client {
     private BufferedReader in;
@@ -16,12 +18,22 @@ public class Client {
     private String title;
     private JFrame frame;
     private JTextArea messageArea;
+    private JTextField textField;
+    private String username;
+    private SimpleDateFormat dateFormatter = new SimpleDateFormat("HH:mm:ss");
 
     public Client(String title) {
-        this.title = title;
+        this.title = "Chat Application";
+
         // Initializing JFrame
-        frame = new JFrame("title");
-        JTextField textField = new JTextField(40);
+        frame = new JFrame(title);
+        textField = new JTextField(40);
+        this.username = JOptionPane.showInputDialog(
+                frame,
+                "Enter your username: ",
+                "User",
+                JOptionPane.PLAIN_MESSAGE
+        );
         messageArea = new JTextArea(8, 40);
 
         textField.setEditable(false);
@@ -33,7 +45,9 @@ public class Client {
         textField.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                out.println(textField.getText());
+                String message = textField.getText();
+                String timestamp = dateFormatter.format(new Date());
+                out.println(username + " [" + timestamp + "]: " + message);
                 textField.setText("");
             }
         });
@@ -56,11 +70,39 @@ public class Client {
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         out = new PrintWriter(socket.getOutputStream(), true);
 
-        // TODO: Implement command system here
-        while (true) {
-            String message = in.readLine();
-            messageArea.append(message + "\n");
+        SwingUtilities.invokeLater(() -> {
+            textField.setEditable(true);
+        });
+
+        Thread readThread = new Thread(() -> {
+            try {
+                while (true) {
+                    String message = in.readLine();
+                    if (message == null) break;
+                    SwingUtilities.invokeLater(() -> {
+                        messageArea.append(message + "\n");
+                    });
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                // Optionally update the UI or notify the user of the error here
+            } finally {
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        readThread.start();
+    }
+
+    private void handleCommand(String command) {
+        if (command.equals("/clear")) {
+            messageArea.setText("");
         }
+        // Add more client-side commands here
     }
 
     public static void main(String[] args) throws IOException {
