@@ -3,12 +3,15 @@ package server;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Server {
     private static final int PORT = 8080;
     private static Set<Handler> clients = new HashSet<>();
+    private static final int MAX_CHAT_HISTORY = 50; // Store last 50 messages
+    private static Queue<String> chatHistory = new LinkedList<>();
+    private static Map<String, Handler> clientMap = new ConcurrentHashMap<>();
 
     public static void main(String[] args) throws IOException {
         System.out.println("The chat server is running.");
@@ -22,6 +25,7 @@ public class Server {
     private static class Handler extends Thread {
         private Socket socket;
         private PrintWriter out;
+        private String username;
 
         public Handler(Socket socket) {
             this.socket = socket;
@@ -30,10 +34,22 @@ public class Server {
         public void run() {
             try {
                 out = new PrintWriter(socket.getOutputStream(), true);
-                clients.add(this);
 
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 String input;
+
+                username = in.readLine();
+                synchronized (clientMap) {
+                    clientMap.put(username, this);
+                    clients.add(this);
+                }
+
+                synchronized (chatHistory) {
+                    for (String historyMsg : chatHistory) {
+                        out.println(historyMsg);
+                    }
+                }
+
                 while ((input = in.readLine()) != null) {
                     if (input.startsWith("/")) {
                         handleServerCommand(input, this);
@@ -44,8 +60,13 @@ public class Server {
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
-                if (out != null) {
-                    clients.remove(this);
+                if (username != null && !username.isEmpty()) {
+                    synchronized (clients) {
+                        clients.remove(this);
+                    }
+                    synchronized (clientMap) {
+                        clientMap.remove(username);
+                    }
                     try {
                         socket.close();
                     } catch (IOException e) {
@@ -56,17 +77,31 @@ public class Server {
         }
 
         private void broadcastMessage(String message) {
-            for (Handler client : clients) {
-                client.out.println(message);
+            synchronized (chatHistory) {
+                chatHistory.add(message);
+                if (chatHistory.size() > MAX_CHAT_HISTORY) {
+                    chatHistory.remove();
+                }
+                for (Handler client : clients) {
+                    client.out.println(message);
+                }
             }
         }
 
         private void handleServerCommand(String command, Handler sender) {
-            // Server-side command processing logic
             if (command.startsWith("/list")) {
-
+                StringBuilder userList = new StringBuilder();
+                synchronized (clientMap) {
+                    for (String user: clientMap.keySet()) {
+                        userList.append(user).append(", ");
+                    }
+                }
+                if (userList.length() > 0) {
+                    userList.setLength(userList.length() - 2);
+                }
+                out.println("Connected users: " + userList);
             }
-            // Add more server-side commands here
+
         }
     }
 }

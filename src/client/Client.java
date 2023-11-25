@@ -46,8 +46,12 @@ public class Client {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String message = textField.getText();
-                String timestamp = dateFormatter.format(new Date());
-                out.println(username + " [" + timestamp + "]: " + message);
+
+                if (isCommand(message)) {
+                    handleClientCommand(message);
+                } else {
+                    sendMessage(message);
+                }
                 textField.setText("");
             }
         });
@@ -62,13 +66,16 @@ public class Client {
                 "Enter IP Address of the Server:",
                 JOptionPane.QUESTION_MESSAGE);
     }
-
+    
     private void runClient() throws IOException {
         String address = getServerAddress();
         Socket socket = new Socket(address, 8080);
 
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         out = new PrintWriter(socket.getOutputStream(), true);
+
+        // Sending the entered username to the server
+        out.println(username);
 
         SwingUtilities.invokeLater(() -> {
             textField.setEditable(true);
@@ -98,11 +105,51 @@ public class Client {
         readThread.start();
     }
 
-    private void handleCommand(String command) {
-        if (command.equals("/clear")) {
-            messageArea.setText("");
+    private void sendServerCommand(String command) {
+        out.println(command);
+    }
+
+    private void sendMessage(String message) {
+        String timestamp = dateFormatter.format(new Date());
+        out.println(username + " [" + timestamp + "]: " + message);
+    }
+
+    private void handleClientCommand(String command) {
+        String[] parts = command.split(" ", 2);
+        String cmd = parts[0].toLowerCase();
+
+        switch (cmd) {
+            case "/clear":
+                messageArea.setText("");
+                break;
+            case "/exit":
+                exitClient();
+                break;
+            case "/list":
+                sendServerCommand(command);
+                break;
+            default:
+                messageArea.append("Unknown command: " + cmd + "\n");
+                break;
         }
-        // Add more client-side commands here
+    }
+
+    private boolean isCommand(String message) {
+        return message.startsWith("/");
+    }
+
+    private void exitClient() {
+        try {
+            if (out != null) {
+                out.close();
+            }
+            if (in != null) {
+                in.close();
+            }
+            System.exit(0); // Closes the application
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) throws IOException {
