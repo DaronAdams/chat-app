@@ -88,6 +88,15 @@ public class Server {
             }
         }
 
+        private void sendMessageToUser(String username, String message) {
+            Handler target = clientMap.get(username);
+            if (target != null) {
+                target.out.println(message);
+            } else {
+                out.println("User is not online");
+            }
+        }
+
         private void handleServerCommand(String command, Handler sender) {
             if (command.startsWith("/list")) {
                 StringBuilder userList = new StringBuilder();
@@ -100,8 +109,14 @@ public class Server {
                     userList.setLength(userList.length() - 2);
                 }
                 out.println("Connected users: " + userList);
+            } else if (command.startsWith("/msg ")) {
+                String[] parts = command.split(" ", 3);
+                if (parts.length >= 3) {
+                    String targetUser = parts[1];
+                    String message = parts[2];
+                    sendMessageToUser(targetUser, "PM from " + sender.username + ": " + message);
+                }
             }
-
         }
     }
 }
