@@ -14,7 +14,7 @@ public class Server {
     private static Map<String, Handler> clientMap = new ConcurrentHashMap<>();
 
     public static void main(String[] args) throws IOException {
-        System.out.println("The chat server is running.");
+        System.out.println("The chat server is now running on port " + PORT);
         try (ServerSocket listener = new ServerSocket(PORT)) {
             while (true) {
                 new Handler(listener.accept()).start();
@@ -39,6 +39,7 @@ public class Server {
                 String input;
 
                 username = in.readLine();
+                out.println("Welcome " + username + "!");
                 synchronized (clientMap) {
                     clientMap.put(username, this);
                     clients.add(this);

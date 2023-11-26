@@ -16,8 +16,6 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 public class Client {
     private BufferedReader in;
@@ -28,12 +26,10 @@ public class Client {
     private JTextField textField;
     private String username;
     private SimpleDateFormat dateFormatter = new SimpleDateFormat("HH:mm:ss");
-    private Map<String, String> commands = new HashMap<>();
 
     public Client(String title) {
         this.title = "Chat Application";
         frame = new JFrame(title);
-
 
         frame.setSize(800, 600);
         textField = new JTextField(40);
@@ -68,26 +64,25 @@ public class Client {
             public void insertUpdate(DocumentEvent e) {
                 showCommandSuggestions(e);
             }
-
-            public void removeUpdate(DocumentEvent e) {
-                // Handle text removal, if necessary
-            }
-
-            public void changedUpdate(DocumentEvent e) {
-                // Plain text components do not fire these events
-            }
+            // Non-used methods required for documentListener
+            public void removeUpdate(DocumentEvent e) {}
+            // Non-used methods required for documentListener
+            public void changedUpdate(DocumentEvent e) {}
         });
     }
 
+    /*
+    * Adds a command to the list of suggestions when a user types "/"
+     */
     private void showCommandSuggestions(DocumentEvent e) {
         try {
             String text = textField.getText(0, e.getOffset() + e.getLength());
             if (text.endsWith("/")) {
                 JPopupMenu suggestionsMenu = new JPopupMenu();
-                suggestionsMenu.add(createSuggestionItem("/list", "Lists all online users"));
-                suggestionsMenu.add(createSuggestionItem("/exit", "Exits the chat"));
-                suggestionsMenu.add(createSuggestionItem("/clear", "Clears all messages from the chat history"));
-                suggestionsMenu.add(createSuggestionItem("/msg", "Sends a private message. Usage: /msg <username> <message>"));
+                suggestionsMenu.add(createSuggestionItem("/list"));
+                suggestionsMenu.add(createSuggestionItem("/exit"));
+                suggestionsMenu.add(createSuggestionItem("/clear"));
+                suggestionsMenu.add(createSuggestionItem("/msg"));
                 suggestionsMenu.show(textField, 0, textField.getHeight());
             }
         } catch (BadLocationException ex) {
@@ -95,7 +90,10 @@ public class Client {
         }
     }
 
-    private JMenuItem createSuggestionItem(String command, String description) {
+    /*
+    * Helper method to add a suggestion item to the JPane menu
+     */
+    private JMenuItem createSuggestionItem(String command) {
         JMenuItem item = new JMenuItem(command);
         item.addActionListener(e -> {
             textField.setText(command + " ");
@@ -103,6 +101,7 @@ public class Client {
         });
         return item;
     }
+
     /*
     * UI prompt for user to enter server address
      */
@@ -112,7 +111,10 @@ public class Client {
                 "Enter IP Address of the Server:",
                 JOptionPane.QUESTION_MESSAGE);
     }
-    
+
+    /*
+    * Runs the client and connects to the server using socket connections
+     */
     private void runClient() throws IOException {
         String address = getServerAddress();
         Socket socket = new Socket(address, 8080);
@@ -202,7 +204,7 @@ public class Client {
 
     public static void main(String[] args) throws IOException {
         try {
-            // Setting up the theme
+            // Setting the theme
             UIManager.setLookAndFeel(new FlatDarculaLaf());
         } catch (Exception ex) {
             ex.printStackTrace();
