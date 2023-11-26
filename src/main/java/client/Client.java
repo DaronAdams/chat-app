@@ -28,12 +28,10 @@ public class Client {
     private JTextField textField;
     private String username;
     private SimpleDateFormat dateFormatter = new SimpleDateFormat("HH:mm:ss");
-    private Map<String, String> commands = new HashMap<>();
 
     public Client(String title) {
         this.title = "Chat Application";
         frame = new JFrame(title);
-
 
         frame.setSize(800, 600);
         textField = new JTextField(40);
@@ -68,14 +66,10 @@ public class Client {
             public void insertUpdate(DocumentEvent e) {
                 showCommandSuggestions(e);
             }
-
-            public void removeUpdate(DocumentEvent e) {
-                // Handle text removal, if necessary
-            }
-
-            public void changedUpdate(DocumentEvent e) {
-                // Plain text components do not fire these events
-            }
+            // Non-used methods required for documentListener
+            public void removeUpdate(DocumentEvent e) {}
+            // Non-used methods required for documentListener
+            public void changedUpdate(DocumentEvent e) {}
         });
     }
 
