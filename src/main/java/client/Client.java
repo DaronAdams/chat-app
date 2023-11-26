@@ -6,9 +6,9 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.Style;
+import javax.swing.text.StyledDocument;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -21,11 +21,11 @@ public class Client {
     private BufferedReader in;
     private PrintWriter out;
     private String title;
-    private JFrame frame;
-    private JTextArea messageArea;
-    private JTextField textField;
-    private String username;
-    private SimpleDateFormat dateFormatter = new SimpleDateFormat("HH:mm:ss");
+    private final JFrame frame;
+    private final JTextPane messagePane;
+    private final JTextField textField;
+    private final String username;
+    private final SimpleDateFormat dateFormatter = new SimpleDateFormat("HH:mm:ss");
 
     public Client(String title) {
         this.title = "Chat Application";
@@ -33,32 +33,30 @@ public class Client {
 
         frame.setSize(800, 600);
         textField = new JTextField(40);
+        messagePane = new JTextPane();
+        messagePane.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(messagePane);
+        frame.getContentPane().add(scrollPane, BorderLayout.CENTER);
         this.username = JOptionPane.showInputDialog(
                 frame,
                 "Enter your username: ",
                 "User",
                 JOptionPane.PLAIN_MESSAGE
         );
-        messageArea = new JTextArea(8, 40);
 
         textField.setEditable(false);
-        messageArea.setEditable(false);
         frame.getContentPane().add(textField, BorderLayout.SOUTH);
-        frame.getContentPane().add(new JScrollPane(messageArea), BorderLayout.CENTER);
         frame.pack();
 
-        textField.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String message = textField.getText();
+        textField.addActionListener(e -> {
+            String message = textField.getText();
 
-                if (isCommand(message)) {
-                    handleClientCommand(message);
-                } else {
-                    sendMessage(message);
-                }
-                textField.setText("");
+            if (isCommand(message)) {
+                handleClientCommand(message);
+            } else {
+                sendMessage(message);
             }
+            textField.setText("");
         });
         textField.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
@@ -69,6 +67,28 @@ public class Client {
             // Non-used methods required for documentListener
             public void changedUpdate(DocumentEvent e) {}
         });
+    }
+
+    /*
+    * Allows you to append stylized text to the message area
+     */
+    private void appendText(String text, Color color) {
+        StyledDocument document = messagePane.getStyledDocument();
+        Style style = messagePane.addStyle("Style", null);
+
+        try {
+            document.insertString(document.getLength(), text + "\n", style);
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void displayMessage(String message, boolean isPrivate) {
+        if (isPrivate) {
+            appendText(message, Color.BLUE);
+        } else {
+            appendText(message, Color.BLACK);
+        }
     }
 
     /*
@@ -135,7 +155,8 @@ public class Client {
                     String message = in.readLine();
                     if (message == null) break;
                     SwingUtilities.invokeLater(() -> {
-                        messageArea.append(message + "\n");
+                        displayMessage(message, message.startsWith("PM"));
+//                        messageArea.append(message + "\n");
                     });
                 }
             } catch (IOException e) {
@@ -167,7 +188,7 @@ public class Client {
 
         switch (cmd) {
             case "/clear":
-                messageArea.setText("");
+                messagePane.setText("");
                 break;
             case "/exit":
                 exitClient();
@@ -179,7 +200,7 @@ public class Client {
                 out.println(command);
                 break;
             default:
-                messageArea.append("Unknown command: " + cmd + "\n");
+                appendText("Unknown command: " + cmd, Color.RED);
                 break;
         }
     }
