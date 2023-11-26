@@ -111,7 +111,10 @@ public class Client {
                 "Enter IP Address of the Server:",
                 JOptionPane.QUESTION_MESSAGE);
     }
-    
+
+    /*
+    * Runs the client and connects to the server using socket connections
+     */
     private void runClient() throws IOException {
         String address = getServerAddress();
         Socket socket = new Socket(address, 8080);
