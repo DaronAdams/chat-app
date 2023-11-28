@@ -156,7 +156,6 @@ public class Client {
                     if (message == null) break;
                     SwingUtilities.invokeLater(() -> {
                         displayMessage(message, message.startsWith("PM"));
-//                        messageArea.append(message + "\n");
                     });
                 }
             } catch (IOException e) {

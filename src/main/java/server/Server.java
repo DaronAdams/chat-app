@@ -116,6 +116,7 @@ public class Server {
                     String targetUser = parts[1];
                     String message = parts[2];
                     sendMessageToUser(targetUser, "PM from " + sender.username + ": " + message);
+                    sender.out.println("PM to " + targetUser + ": " + message);
                 }
             }
         }
