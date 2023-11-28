@@ -7,6 +7,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.io.BufferedReader;
@@ -46,6 +47,7 @@ public class Client {
 
         textField.setEditable(false);
         frame.getContentPane().add(textField, BorderLayout.SOUTH);
+        frame.getContentPane().setPreferredSize(new Dimension(400, 300));
         frame.pack();
 
         textField.addActionListener(e -> {
@@ -73,22 +75,20 @@ public class Client {
     * Allows you to append stylized text to the message area
      */
     private void appendText(String text, Color color) {
-        StyledDocument document = messagePane.getStyledDocument();
-        Style style = messagePane.addStyle("Style", null);
+        StyledDocument doc = messagePane.getStyledDocument();
+        Style style = messagePane.addStyle("StyledText", null);
+        StyleConstants.setForeground(style, color);
 
         try {
-            document.insertString(document.getLength(), text + "\n", style);
+            doc.insertString(doc.getLength(), text + "\n", style);
         } catch (BadLocationException e) {
             e.printStackTrace();
         }
     }
 
     private void displayMessage(String message, boolean isPrivate) {
-        if (isPrivate) {
-            appendText(message, Color.BLUE);
-        } else {
-            appendText(message, Color.BLACK);
-        }
+        Color messageColor = isPrivate ? Color.MAGENTA : Color.WHITE;
+        appendText(message, messageColor);
     }
 
     /*
@@ -155,7 +155,8 @@ public class Client {
                     String message = in.readLine();
                     if (message == null) break;
                     SwingUtilities.invokeLater(() -> {
-                        displayMessage(message, message.startsWith("PM"));
+                        boolean isPrivate = message.startsWith("PM");
+                        displayMessage(message, isPrivate);
                     });
                 }
             } catch (IOException e) {
